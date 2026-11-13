@@ -12,6 +12,9 @@ Telefonda dokunarak, bilgisayarda tıklayarak oynanır. Kurulum ve bağımlılı
 - **Filtre (renkli cam)** ışığın yalnızca kendi rengini geçirir.
 - Bölümü ne kadar az dokunuşla çözersen o kadar yıldız alırsın: "En az" sayısına ulaşırsan üç yıldız.
 
+Her bölüm hiçbir hedef yanmadan başlar. Yeni bir öğe (ayna, renk karışımı, ayırıcı, filtre) ilk kez
+çıktığında kısa, canlı örnekli bir tanıtım kartı gösterilir.
+
 40 bölüm ve her gün değişen bir "Günün Bulmacası" var. İlerleme tarayıcıda saklanır.
 
 ## Geliştirme

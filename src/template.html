@@ -36,7 +36,7 @@
     <div id="stage" class="stage">
       <canvas id="board" aria-label="Oyun tahtası. Aynalara ve ayırıcılara dokunarak çevir."></canvas>
     </div>
-    <p id="tip" class="tip"></p>
+    <p id="tip" class="tip">Tüm hedefleri kendi renginde yak.</p>
     <div id="tools" class="tools">
       <button id="undo" type="button">Geri al</button>
       <button id="reset" type="button">Baştan</button>
@@ -54,6 +54,16 @@
       </div>
     </div>
   </section>
+
+  <div id="intro" class="intro" role="dialog" aria-modal="true" aria-labelledby="intro-title" hidden>
+    <div class="intro-card">
+      <p class="eyebrow">Yeni öğe</p>
+      <h2 id="intro-title"></h2>
+      <canvas id="demo" aria-hidden="true"></canvas>
+      <p id="intro-text"></p>
+      <button id="intro-ok" class="primary" type="button">Anladım</button>
+    </div>
+  </div>
 </main>
 
 <script>

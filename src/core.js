@@ -47,6 +47,11 @@ export function trace(lv) {
   return { out, recv, inb };
 }
 
+// Şu an kendi renginde yanan hedef sayısı.
+export function litCount(lv, tr = trace(lv)) {
+  return lv.cells.reduce((n, c, i) => n + (c && c.t === 'target' && tr.recv[i] === c.c ? 1 : 0), 0);
+}
+
 export function isSolved(lv, tr = trace(lv)) {
   return lv.cells.every((c, i) => !c || c.t !== 'target' || tr.recv[i] === c.c);
 }
@@ -147,13 +152,16 @@ function tryBuild(r, p, minPar) {
   }
   if (p.mix && !hasMixed) return null;
 
-  // Başlangıç: çözümlere en uzak karışık durum. par = gereken en az dokunuş.
+  // Başlangıç: hiçbir hedefin yanmadığı, çözümlere en uzak karışık durum.
+  // par = gereken en az dokunuş.
   const sols = solutions(lv);
   const k = movable(lv).length;
   let start = 0, par = -1;
-  for (let t = 0; t < 48; t++) {
+  for (let t = 0; t < 64; t++) {
     const m = ri(1 << k), d = nearest(m, sols).dist;
-    if (d > par) { par = d; start = m; }
+    if (d <= par) continue;
+    setState(lv, m);
+    if (litCount(lv) === 0) { par = d; start = m; }
   }
   if (par < minPar) return null;
   setState(lv, start);

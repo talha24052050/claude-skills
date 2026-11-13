@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  trace, isSolved, movable, getState, setState, solutions, nearest, stars,
+  trace, isSolved, litCount, movable, getState, setState, solutions, nearest, stars,
   generate, campaignLevel, dailyLevel, levelParams, LEVEL_COUNT,
 } from '../src/core.js';
 
@@ -102,7 +102,7 @@ test('her bölüm çözülebilir, çözülmemiş başlar ve par doğrudur', () =
     const lv = campaignLevel(n);
     const p = levelParams(n);
     assert.equal(lv.cells.length, p.w * p.h, `bölüm ${n} boyut`);
-    assert.ok(!isSolved(lv), `bölüm ${n} çözülmüş başlıyor`);
+    assert.equal(litCount(lv), 0, `bölüm ${n} yanan hedefle başlıyor`);
     const sols = solutions(lv);
     assert.ok(sols.length > 0, `bölüm ${n} çözümsüz`);
     assert.equal(nearest(getState(lv), sols).dist, lv.par, `bölüm ${n} par`);
@@ -124,6 +124,7 @@ test('zorluk bölümlerle artar', () => {
 test('günlük bulmaca çözülebilir ve güne göre değişir', () => {
   const a = dailyLevel(20261113), b = dailyLevel(20261114);
   assert.ok(solutions(a).length > 0);
+  for (let d = 20261101; d <= 20261130; d++) assert.equal(litCount(dailyLevel(d)), 0, `${d} yanan hedefle başlıyor`);
   assert.notDeepEqual(a, b);
   assert.deepEqual(a, dailyLevel(20261113));
 });
