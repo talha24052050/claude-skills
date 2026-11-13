@@ -422,6 +422,13 @@ function frame(now) {
   ctx.globalCompositeOperation = 'source-over';
 }
 
+// Android uygulamasındaki geri tuşu: bölümdeyken menüye döner.
+window.prizmaBack = () => {
+  if (!game) return false;
+  showMenu();
+  return true;
+};
+
 soundLabel();
 showMenu();
 requestAnimationFrame(frame);

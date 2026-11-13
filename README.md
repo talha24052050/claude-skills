@@ -17,6 +17,19 @@ Her bölüm hiçbir hedef yanmadan başlar. Yeni bir öğe (ayna, renk karışı
 
 40 bölüm ve her gün değişen bir "Günün Bulmacası" var. İlerleme tarayıcıda saklanır.
 
+## Android uygulaması
+
+`android/` klasörü, oyunu tam ekran ve internetsiz çalıştıran küçük bir Android uygulamasıdır (Android 7.0+).
+Oyunun kendisi aynı `index.html` dosyasıdır; uygulama onu bir WebView içinde açar, bu yüzden oyundaki her
+değişiklik web sürümüne de uygulamaya da yansır.
+
+```
+cd android && ./gradlew assembleDebug   # JDK 17+ ve Android SDK gerekir
+```
+
+APK `android/app/build/outputs/apk/debug/app-debug.apk` yoluna yazılır. GitHub Actions her push'ta aynı APK'yı
+derler ve `prizma-apk` adıyla çalışmanın "Artifacts" bölümüne ekler.
+
 ## Geliştirme
 
 ```
