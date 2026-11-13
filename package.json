@@ -1,0 +1,11 @@
+{
+  "name": "prizma",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Prizma: renkli ışınları aynalarla hedeflere yönlendirdiğin tarayıcı bulmacası",
+  "scripts": {
+    "test": "node --test",
+    "build": "node build.mjs"
+  }
+}

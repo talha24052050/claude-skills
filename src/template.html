@@ -1,0 +1,61 @@
+<title>Prizma</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<!--BODY-->
+<style>
+/*CSS*/
+</style>
+
+<main id="app">
+  <section id="menu">
+    <header class="brand">
+      <h1>PRİZMA</h1>
+      <div class="spectrum" aria-hidden="true"><i></i><i></i><i></i></div>
+      <p>Aynaları çevir, ışınları karıştır, her hedefi kendi renginde yak.</p>
+    </header>
+    <button id="daily" class="daily" type="button">
+      <span>
+        <strong>Günün Bulmacası</strong>
+        <small id="daily-date"></small>
+      </span>
+      <span id="daily-stars" class="stars"></span>
+    </button>
+    <div class="levels-head">
+      <h2>Bölümler</h2>
+      <span id="total" class="stars"></span>
+    </div>
+    <div id="levels" class="levels"></div>
+  </section>
+
+  <section id="play" hidden>
+    <header class="bar">
+      <button id="back" class="ghost" type="button">‹ Bölümler</button>
+      <h2 id="title"></h2>
+      <p id="count" class="count"></p>
+    </header>
+    <div id="stage" class="stage">
+      <canvas id="board" aria-label="Oyun tahtası. Aynalara ve ayırıcılara dokunarak çevir."></canvas>
+    </div>
+    <p id="tip" class="tip"></p>
+    <div id="tools" class="tools">
+      <button id="undo" type="button">Geri al</button>
+      <button id="reset" type="button">Baştan</button>
+      <button id="hint" type="button">İpucu</button>
+      <button id="sound" type="button"></button>
+    </div>
+    <div id="win" class="win" hidden>
+      <div>
+        <p id="win-stars" class="win-stars"></p>
+        <p id="win-text"></p>
+      </div>
+      <div class="win-actions">
+        <button id="win-menu" class="ghost" type="button">Bölümler</button>
+        <button id="next" class="primary" type="button">Sonraki bölüm</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+/*JS*/
+</script>

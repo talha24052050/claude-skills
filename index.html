@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html{box-sizing:border-box;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
+<title>Prizma</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+</head>
+<body>
+<style>
+/* Yerleşim: tek ekran, ortalanmış dar sütun. Üstte başlık, ortada tahta, altta araçlar.
+   Tek ve koyu bir görünüm: ışınlar karanlık bir optik masada parlar. */
+:root {
+  color-scheme: dark;
+  --bg: #090c17;
+  --panel: #121729;
+  --line: #262d49;
+  --fg: #e8ebf7;
+  --muted: #8891b3;
+  --red: #ff4055;
+  --green: #35e27f;
+  --blue: #4a86ff;
+  --gold: #ffd83b;
+  --display: 'Chakra Petch', 'Trebuchet MS', sans-serif;
+  --body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  box-sizing: border-box;
+  padding-block: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.45 var(--body);
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app { max-width: 520px; height: 100%; margin: 0 auto; }
+#app > section { height: 100%; display: flex; flex-direction: column; gap: 14px; }
+
+h1, h2, p { margin: 0; }
+h1, h2, .count, .lvl b { font-family: var(--display); }
+h2 { font-size: 1.05rem; font-weight: 700; letter-spacing: 0.04em; }
+
+button {
+  font: 500 0.95rem var(--body);
+  color: var(--fg);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+button:active { transform: translateY(1px); }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+button:disabled { opacity: 0.35; cursor: default; }
+button.ghost { background: none; border-color: transparent; color: var(--muted); padding-inline: 4px; }
+button.primary { background: var(--gold); border-color: var(--gold); color: #1a1500; font-weight: 600; }
+
+.stars { color: var(--gold); letter-spacing: 0.08em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Menü */
+.brand { padding-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+.brand h1 { font-size: clamp(2.4rem, 13vw, 3.6rem); line-height: 1; letter-spacing: 0.14em; }
+.brand p { color: var(--muted); max-width: 34ch; }
+/* Üç ana ışın: kırmızı, yeşil, mavi */
+.spectrum { display: flex; gap: 6px; width: min(100%, 250px); }
+.spectrum i { flex: 1; height: 4px; border-radius: 2px; }
+.spectrum i:nth-child(1) { background: var(--red); box-shadow: 0 0 12px var(--red); }
+.spectrum i:nth-child(2) { background: var(--green); box-shadow: 0 0 12px var(--green); }
+.spectrum i:nth-child(3) { background: var(--blue); box-shadow: 0 0 12px var(--blue); }
+
+.daily { display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: left; padding: 14px 16px; }
+.daily strong { display: block; font: 700 1.05rem var(--display); letter-spacing: 0.03em; }
+.daily small { color: var(--muted); font-size: 0.85rem; }
+
+.levels-head { display: flex; justify-content: space-between; align-items: baseline; }
+.levels {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-auto-rows: min-content;
+  gap: 8px;
+  padding: 2px 2px 12px;
+}
+.lvl { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 0 8px; }
+.lvl b { font-size: 1.15rem; font-weight: 700; }
+.lvl .stars { font-size: 0.62rem; min-height: 1em; }
+.lvl.done { border-color: #5b5020; }
+
+/* Oyun */
+.bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+.bar .ghost { justify-self: start; }
+.count { justify-self: end; color: var(--muted); font-size: 0.9rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.count b { color: var(--fg); }
+
+.stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+#board { display: block; touch-action: manipulation; cursor: pointer; }
+
+.tip { color: var(--muted); font-size: 0.9rem; text-align: center; min-height: 2.9em; text-wrap: balance; }
+.tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.tools button { padding-inline: 4px; }
+
+.win {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 1px solid #5b5020;
+  border-radius: 12px;
+}
+.win-stars { color: var(--gold); font-size: 1.7rem; line-height: 1.1; letter-spacing: 0.1em; }
+.win-actions { display: flex; gap: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  button:active { transform: none; }
+}
+
+</style>
+
+<main id="app">
+  <section id="menu">
+    <header class="brand">
+      <h1>PRİZMA</h1>
+      <div class="spectrum" aria-hidden="true"><i></i><i></i><i></i></div>
+      <p>Aynaları çevir, ışınları karıştır, her hedefi kendi renginde yak.</p>
+    </header>
+    <button id="daily" class="daily" type="button">
+      <span>
+        <strong>Günün Bulmacası</strong>
+        <small id="daily-date"></small>
+      </span>
+      <span id="daily-stars" class="stars"></span>
+    </button>
+    <div class="levels-head">
+      <h2>Bölümler</h2>
+      <span id="total" class="stars"></span>
+    </div>
+    <div id="levels" class="levels"></div>
+  </section>
+
+  <section id="play" hidden>
+    <header class="bar">
+      <button id="back" class="ghost" type="button">‹ Bölümler</button>
+      <h2 id="title"></h2>
+      <p id="count" class="count"></p>
+    </header>
+    <div id="stage" class="stage">
+      <canvas id="board" aria-label="Oyun tahtası. Aynalara ve ayırıcılara dokunarak çevir."></canvas>
+    </div>
+    <p id="tip" class="tip"></p>
+    <div id="tools" class="tools">
+      <button id="undo" type="button">Geri al</button>
+      <button id="reset" type="button">Baştan</button>
+      <button id="hint" type="button">İpucu</button>
+      <button id="sound" type="button"></button>
+    </div>
+    <div id="win" class="win" hidden>
+      <div>
+        <p id="win-stars" class="win-stars"></p>
+        <p id="win-text"></p>
+      </div>
+      <div class="win-actions">
+        <button id="win-menu" class="ghost" type="button">Bölümler</button>
+        <button id="next" class="primary" type="button">Sonraki bölüm</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+// Prizma oyun mantığı: ışın izleme, çözücü ve bölüm üretici. DOM'a bağımlı değildir.
+//
+// Renkler bit maskesidir: 1=kırmızı, 2=yeşil, 4=mavi (3=sarı, 5=mor, 6=camgöbeği, 7=beyaz).
+// Yönler: 0=doğu, 1=güney, 2=batı, 3=kuzey.
+// Hücre: null (boş) ya da {t:'wall'|'emit'|'mirror'|'split'|'filter'|'target', d, c, o}.
+// Ayna/ayırıcı yönelimi o: 0 = '/', 1 = '\'.
+
+const DX = [1, 0, -1, 0];
+const DY = [0, 1, 0, -1];
+const REFLECT = [[3, 2, 1, 0], [1, 0, 3, 2]];
+
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// out[hücre*4+yön]: hücreden o yöne çıkan ışının rengi.
+// recv[hücre]: hedefe ulaşan renk. inb[hücre]: hücreye giren tüm ışınların rengi.
+function trace(lv) {
+  const { w, h, cells } = lv;
+  const out = new Uint8Array(w * h * 4);
+  const recv = new Uint8Array(w * h);
+  const inb = new Uint8Array(w * h);
+  const q = [];
+  cells.forEach((c, i) => { if (c && c.t === 'emit') q.push(i, c.d, c.c); });
+  for (let p = 0; p < q.length; p += 3) {
+    const i = q[p], d = q[p + 1];
+    const bits = q[p + 2] & ~out[i * 4 + d];
+    if (!bits) continue;
+    out[i * 4 + d] |= bits;
+    const x = (i % w) + DX[d], y = ((i / w) | 0) + DY[d];
+    if (x < 0 || y < 0 || x >= w || y >= h) continue;
+    const j = y * w + x, c = cells[j];
+    inb[j] |= bits;
+    if (!c) q.push(j, d, bits);
+    else if (c.t === 'target') recv[j] |= bits;
+    else if (c.t === 'mirror') q.push(j, REFLECT[c.o][d], bits);
+    else if (c.t === 'split') q.push(j, d, bits, j, REFLECT[c.o][d], bits);
+    else if (c.t === 'filter' && bits & c.c) q.push(j, d, bits & c.c);
+  }
+  return { out, recv, inb };
+}
+
+function isSolved(lv, tr = trace(lv)) {
+  return lv.cells.every((c, i) => !c || c.t !== 'target' || tr.recv[i] === c.c);
+}
+
+// Oyuncunun çevirebildiği parçaların hücre indeksleri.
+function movable(lv) {
+  const res = [];
+  lv.cells.forEach((c, i) => { if (c && (c.t === 'mirror' || c.t === 'split')) res.push(i); });
+  return res;
+}
+
+function getState(lv) {
+  return movable(lv).reduce((m, i, b) => m | (lv.cells[i].o << b), 0);
+}
+
+function setState(lv, mask) {
+  movable(lv).forEach((i, b) => { lv.cells[i].o = (mask >> b) & 1; });
+}
+
+// Bölümü çözen tüm durumlar (kaba kuvvet; parça sayısı küçük tutulur).
+function solutions(lv) {
+  const saved = getState(lv), k = movable(lv).length, res = [];
+  for (let m = 0; m < 1 << k; m++) {
+    setState(lv, m);
+    if (isSolved(lv)) res.push(m);
+  }
+  setState(lv, saved);
+  return res;
+}
+
+function popcount(x) {
+  let n = 0;
+  for (; x; x &= x - 1) n++;
+  return n;
+}
+
+// Verilen duruma en yakın çözüm: {dist: gereken dokunuş, mask: çözüm durumu}.
+function nearest(state, sols) {
+  let best = { dist: Infinity, mask: 0 };
+  for (const s of sols) {
+    const d = popcount(s ^ state);
+    if (d < best.dist) best = { dist: d, mask: s };
+  }
+  return best;
+}
+
+function stars(taps, par) {
+  return taps <= par ? 3 : taps <= par + 2 ? 2 : 1;
+}
+
+function tryBuild(r, p, minPar) {
+  const { w, h } = p, n = w * h;
+  const cells = new Array(n).fill(null);
+  const lv = { w, h, cells };
+  const ri = (k) => (r() * k) | 0;
+  const free = () => {
+    for (;;) { const i = ri(n); if (!cells[i]) return i; }
+  };
+
+  // Kaynaklar kenarda durur ve içeri bakar.
+  for (const c of p.emit) {
+    for (;;) {
+      const side = ri(4);
+      const x = side === 0 ? 0 : side === 2 ? w - 1 : 1 + ri(w - 2);
+      const y = side === 1 ? 0 : side === 3 ? h - 1 : 1 + ri(h - 2);
+      if (cells[y * w + x]) continue;
+      cells[y * w + x] = { t: 'emit', d: side, c };
+      break;
+    }
+  }
+  for (let k = 0; k < (p.walls || 0); k++) cells[free()] = { t: 'wall' };
+  for (let k = 0; k < p.mirrors; k++) cells[free()] = { t: 'mirror', o: ri(2) };
+  for (let k = 0; k < (p.splits || 0); k++) cells[free()] = { t: 'split', o: ri(2) };
+  for (let k = 0; k < (p.filters || 0); k++) cells[free()] = { t: 'filter', c: 1 << ri(3) };
+
+  // Hedefler, bu (çözüm) durumunda ışının geçtiği boş hücrelere konur.
+  const plain = (c) => p.emit.includes(c);
+  for (let k = 0; k < p.targets; k++) {
+    const { inb } = trace(lv);
+    let cand = [];
+    for (let i = 0; i < n; i++) if (!cells[i] && inb[i]) cand.push(i);
+    if (!cand.length) return null;
+    const mixed = cand.filter((i) => !plain(inb[i]));
+    // Karışık renkli hedef en sona konur; önce konursa sonraki hedefler ışınlarını keser.
+    if (p.mix && k === p.targets - 1 && mixed.length) cand = mixed;
+    const i = cand[ri(cand.length)];
+    cells[i] = { t: 'target', c: inb[i] };
+  }
+  // Yeni hedefler ışınları kestiği için renkleri son duruma göre yeniden belirle.
+  const { recv } = trace(lv);
+  let hasMixed = false;
+  for (let i = 0; i < n; i++) {
+    const c = cells[i];
+    if (!c || c.t !== 'target') continue;
+    if (!recv[i]) return null;
+    c.c = recv[i];
+    if (!plain(c.c)) hasMixed = true;
+  }
+  if (p.mix && !hasMixed) return null;
+
+  // Başlangıç: çözümlere en uzak karışık durum. par = gereken en az dokunuş.
+  const sols = solutions(lv);
+  const k = movable(lv).length;
+  let start = 0, par = -1;
+  for (let t = 0; t < 48; t++) {
+    const m = ri(1 << k), d = nearest(m, sols).dist;
+    if (d > par) { par = d; start = m; }
+  }
+  if (par < minPar) return null;
+  setState(lv, start);
+  lv.par = par;
+  return lv;
+}
+
+// Tohumdan her zaman aynı, çözülebilir bölümü üretir.
+// Uygun bölüm çıkmazsa zorluk eşiği kademeli olarak düşürülür.
+function generate(seed, p) {
+  const r = rng(seed);
+  for (let attempt = 0; ; attempt++) {
+    const lv = tryBuild(r, p, Math.max(1, p.minPar - ((attempt / 2000) | 0)));
+    if (lv) return lv;
+  }
+}
+
+const LEVEL_COUNT = 40;
+
+function levelParams(n) {
+  const one = [1, 2, 4][n % 3];
+  const two = [[1, 2], [1, 4], [2, 4]][n % 3];
+  if (n <= 4) return { w: 5, h: 5, emit: [one], mirrors: n > 2 ? 4 : 3, targets: 1, minPar: n > 2 ? 2 : 1 };
+  if (n <= 8) return { w: 5, h: 6, emit: two, mirrors: 5, walls: 1, targets: 2, minPar: n > 6 ? 3 : 2 };
+  if (n <= 14) return { w: 6, h: 7, emit: [...two, two[n % 2]], mirrors: 6, walls: 2, targets: 2, mix: true, minPar: 3 };
+  if (n <= 20) return { w: 6, h: 7, emit: two, mirrors: 5, splits: 2, walls: 2, targets: 3, mix: true, minPar: n > 17 ? 4 : 3 };
+  if (n <= 28) return { w: 6, h: 8, emit: [7, one], mirrors: 6, splits: 2, filters: 2, walls: 3, targets: 3, mix: true, minPar: 4 };
+  return { w: 7, h: 9, emit: [1, 2, 4], mirrors: 7, splits: 3, filters: 2, walls: 4, targets: 4, mix: true, minPar: 5 };
+}
+
+function campaignLevel(n) {
+  return generate(n * 7919 + 13, levelParams(n));
+}
+
+// dateNum: YYYYAAGG biçiminde sayı (ör. 20261113).
+function dailyLevel(dateNum) {
+  return generate(dateNum, levelParams(24));
+}
+
+const $ = (id) => document.getElementById(id);
+const COLORS = { 1: '#ff4055', 2: '#35e27f', 4: '#4a86ff', 3: '#ffd83b', 5: '#ff58e4', 6: '#3fe9ff', 7: '#ffffff' };
+const TIPS = {
+  1: 'Aynaya dokun, döndür. Işını halkaya ulaştır.',
+  5: 'Her hedef yalnızca kendi rengindeki ışıkla yanar.',
+  9: 'Renkler hedefte karışır: kırmızı + yeşil = sarı, kırmızı + mavi = mor, yeşil + mavi = camgöbeği.',
+  15: 'Kesikli çizgili ayırıcı, ışını hem geçirir hem yansıtır.',
+  21: 'Renkli cam filtre, ışığın yalnızca kendi rengini geçirir. Beyaz ışık üç rengin toplamıdır.',
+};
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---- Kayıt (yalnızca bu tarayıcıda durur) ----
+let save = { stars: {}, muted: false };
+try { save = { ...save, ...JSON.parse(localStorage.getItem('prizma-v1')) }; } catch {}
+const persist = () => { try { localStorage.setItem('prizma-v1', JSON.stringify(save)); } catch {} };
+const starText = (s) => '★'.repeat(s) + '☆'.repeat(3 - s);
+
+function today() {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
+// ---- Ses ----
+let audio;
+function tone(freq, dur = 0.12, type = 'sine', vol = 0.08, delay = 0) {
+  if (save.muted) return;
+  try {
+    audio ||= new AudioContext();
+    if (audio.state === 'suspended') audio.resume();
+    const osc = audio.createOscillator(), gain = audio.createGain();
+    const t = audio.currentTime + delay;
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(gain).connect(audio.destination);
+    osc.start(t);
+    osc.stop(t + dur);
+  } catch {}
+}
+
+// ---- Menü ----
+function showMenu() {
+  game = null;
+  $('play').hidden = true;
+  $('menu').hidden = false;
+  let done = 0, total = 0;
+  for (let n = 1; n <= LEVEL_COUNT; n++) {
+    if (save.stars[n]) done = n;
+    total += save.stars[n] || 0;
+  }
+  $('total').textContent = `★ ${total} / ${LEVEL_COUNT * 3}`;
+  $('daily-date').textContent = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
+  const ds = save.stars['d' + today()];
+  $('daily-stars').textContent = ds ? starText(ds) : 'Oyna ›';
+  $('levels').replaceChildren(...Array.from({ length: LEVEL_COUNT }, (_, k) => {
+    const n = k + 1, s = save.stars[n];
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'lvl' + (s ? ' done' : '');
+    b.disabled = n > done + 3; // takılınca atlayabilmek için üç bölüm ileri açık
+    b.setAttribute('aria-label', `Bölüm ${n}` + (s ? `, ${s} yıldız` : b.disabled ? ', kilitli' : ''));
+    b.innerHTML = `<b>${n}</b><span class="stars">${s ? starText(s) : ''}</span>`;
+    b.onclick = () => openLevel(n);
+    return b;
+  }));
+}
+
+// ---- Oyun durumu ----
+let game = null;
+const canvas = $('board'), ctx = canvas.getContext('2d');
+let S = 0; // hücre kenarı (CSS pikseli)
+
+function openLevel(id) {
+  const lv = typeof id === 'number' ? campaignLevel(id) : dailyLevel(today());
+  game = {
+    id, lv, sols: solutions(lv), start: getState(lv), tr: trace(lv),
+    history: [], penalty: 0, won: false,
+    hint: -1, hintUntil: 0, turned: new Map(), sparks: [],
+  };
+  $('menu').hidden = true;
+  $('play').hidden = false;
+  $('win').hidden = true;
+  $('tools').hidden = $('tip').hidden = false;
+  $('title').textContent = typeof id === 'number' ? `Bölüm ${id}` : 'Günün Bulmacası';
+  $('tip').textContent = TIPS[id] || 'Tüm hedefleri kendi renginde yak.';
+  resize();
+  refresh();
+}
+
+const taps = () => game.history.length + game.penalty;
+
+function refresh() {
+  const { lv } = game, before = game.tr;
+  game.tr = trace(lv);
+  lv.cells.forEach((c, i) => {
+    if (c && c.t === 'target' && game.tr.recv[i] === c.c && before.recv[i] !== c.c) {
+      tone(660 + 110 * (i % 4), 0.3, 'sine', 0.07);
+      burst(i, c.c, 10);
+    }
+  });
+  $('count').innerHTML = `Dokunuş <b>${taps()}</b> · En az ${lv.par}`;
+  $('undo').disabled = !game.history.length;
+  if (!game.won && isSolved(lv, game.tr)) win();
+}
+
+function flip(i) {
+  const c = game.lv.cells[i];
+  c.o ^= 1;
+  game.turned.set(i, performance.now());
+}
+
+function tap(i) {
+  const c = game.lv.cells[i];
+  if (game.won || !c || (c.t !== 'mirror' && c.t !== 'split')) return;
+  flip(i);
+  game.history.push(i);
+  if (i === game.hint) game.hint = -1;
+  tone(c.o ? 540 : 430, 0.07, 'triangle', 0.09);
+  if (navigator.vibrate) navigator.vibrate(8);
+  refresh();
+}
+
+function win() {
+  const { id, lv } = game;
+  game.won = true;
+  const s = stars(taps(), lv.par);
+  const key = typeof id === 'number' ? id : 'd' + today();
+  save.stars[key] = Math.max(s, save.stars[key] || 0);
+  persist();
+  [523, 659, 784, 1047].forEach((f, k) => tone(f, 0.35, 'triangle', 0.08, 0.15 + k * 0.11));
+  lv.cells.forEach((c, i) => { if (c && c.t === 'target') burst(i, c.c, 26); });
+  $('win-stars').textContent = starText(s);
+  $('win-text').textContent = s === 3
+    ? `Kusursuz: ${taps()} dokunuş.`
+    : `${taps()} dokunuşta çözdün. Üç yıldız için ${lv.par}.`;
+  $('next').hidden = typeof id !== 'number' || id >= LEVEL_COUNT;
+  setTimeout(() => {
+    if (!game || game.lv !== lv) return;
+    $('tools').hidden = $('tip').hidden = true;
+    $('win').hidden = false;
+    resize();
+  }, 700);
+}
+
+$('undo').onclick = () => {
+  if (game.won || !game.history.length) return;
+  flip(game.history.pop());
+  refresh();
+};
+$('reset').onclick = () => {
+  if (game.won) return;
+  const diff = getState(game.lv) ^ game.start;
+  movable(game.lv).forEach((i, b) => { if ((diff >> b) & 1) flip(i); });
+  game.history = [];
+  refresh();
+};
+// İpucu, en yakın çözüme göre yanlış duran bir parçayı gösterir; bir dokunuşa mal olur.
+$('hint').onclick = () => {
+  if (game.won) return;
+  const state = getState(game.lv);
+  const diff = nearest(state, game.sols).mask ^ state;
+  game.hint = movable(game.lv)[31 - Math.clz32(diff & -diff)];
+  game.hintUntil = performance.now() + 4000;
+  game.penalty++;
+  tone(300, 0.15, 'sine', 0.06);
+  refresh();
+};
+function soundLabel() { $('sound').textContent = save.muted ? 'Ses kapalı' : 'Ses açık'; }
+$('sound').onclick = () => { save.muted = !save.muted; persist(); soundLabel(); tone(600, 0.08); };
+$('back').onclick = $('win-menu').onclick = showMenu;
+$('next').onclick = () => openLevel(game.id + 1);
+$('daily').onclick = () => openLevel('daily');
+
+canvas.addEventListener('pointerdown', (e) => {
+  if (!game) return;
+  const r = canvas.getBoundingClientRect();
+  const x = Math.floor((e.clientX - r.left) / S), y = Math.floor((e.clientY - r.top) / S);
+  if (x >= 0 && y >= 0 && x < game.lv.w && y < game.lv.h) tap(y * game.lv.w + x);
+});
+
+// ---- Çizim ----
+function resize() {
+  if (!game) return;
+  const { w, h } = game.lv, stage = $('stage');
+  canvas.style.width = canvas.style.height = '0';
+  S = Math.floor(Math.min(stage.clientWidth / w, stage.clientHeight / h, 88));
+  const dpr = window.devicePixelRatio || 1;
+  canvas.style.width = `${S * w}px`;
+  canvas.style.height = `${S * h}px`;
+  canvas.width = S * w * dpr;
+  canvas.height = S * h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+addEventListener('resize', resize);
+
+function burst(i, color, count) {
+  if (reducedMotion) return;
+  const { w } = game.lv;
+  for (let k = 0; k < count; k++) {
+    const a = Math.random() * 6.283, v = 0.6 + Math.random() * 1.8;
+    game.sparks.push({ x: (i % w) + 0.5, y: ((i / w) | 0) + 0.5, vx: Math.cos(a) * v, vy: Math.sin(a) * v, born: performance.now(), color });
+  }
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+}
+
+function drawBeams(now) {
+  const { lv, tr } = game, { w, h, cells } = lv;
+  ctx.globalCompositeOperation = 'lighter'; // üst üste binen ışınların renkleri toplanır
+  ctx.lineCap = 'round';
+  const passes = [
+    // alfa toplamı 1: çekirdek tam ışın rengini verir, yalnızca kesişen ışınlar karışır
+    { width: 0.3, alpha: 0.12 },
+    { width: 0.14, alpha: 0.2 },
+    { width: 0.06, alpha: 0.68 },
+  ];
+  for (let i = 0; i < w * h; i++) {
+    for (let d = 0; d < 4; d++) {
+      const m = tr.out[i * 4 + d];
+      if (!m) continue;
+      const x = i % w, y = (i / w) | 0, nx = x + DX[d], ny = y + DY[d];
+      const next = nx >= 0 && ny >= 0 && nx < w && ny < h ? cells[ny * w + nx] : { t: 'wall' };
+      const len = next && (next.t === 'wall' || next.t === 'emit') ? 0.5 : 1;
+      const x0 = (x + 0.5) * S, y0 = (y + 0.5) * S;
+      const x1 = x0 + DX[d] * len * S, y1 = y0 + DY[d] * len * S;
+      ctx.strokeStyle = COLORS[m];
+      for (const p of passes) {
+        ctx.globalAlpha = p.alpha;
+        ctx.lineWidth = S * p.width;
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      }
+      // ışının yönünü gösteren akan parıltı
+      ctx.globalAlpha = 0.3;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = S * 0.025;
+      ctx.setLineDash([S * 0.06, S * 0.44]);
+      ctx.lineDashOffset = reducedMotion ? 0 : -(now / 1000) * S * 1.5;
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+function drawPiece(c, i, now) {
+  const { lv, tr } = game;
+  const cx = ((i % lv.w) + 0.5) * S, cy = (((i / lv.w) | 0) + 0.5) * S;
+  ctx.save();
+  ctx.translate(cx, cy);
+  if (c.t === 'wall') {
+    roundRect(-S * 0.42, -S * 0.42, S * 0.84, S * 0.84, S * 0.1);
+    ctx.fillStyle = '#2b3355'; ctx.fill();
+    ctx.strokeStyle = '#3d476f'; ctx.lineWidth = 1.5; ctx.stroke();
+  } else if (c.t === 'emit') {
+    roundRect(-S * 0.34, -S * 0.34, S * 0.68, S * 0.68, S * 0.14);
+    ctx.fillStyle = '#171d36'; ctx.fill();
+    ctx.strokeStyle = COLORS[c.c]; ctx.lineWidth = S * 0.05; ctx.stroke();
+    ctx.rotate((c.d * Math.PI) / 2);
+    ctx.beginPath();
+    ctx.moveTo(S * 0.2, 0); ctx.lineTo(-S * 0.1, -S * 0.17); ctx.lineTo(-S * 0.1, S * 0.17);
+    ctx.closePath();
+    ctx.fillStyle = COLORS[c.c]; ctx.fill();
+  } else if (c.t === 'filter') {
+    roundRect(-S * 0.3, -S * 0.3, S * 0.6, S * 0.6, S * 0.08);
+    ctx.globalAlpha = 0.28; ctx.fillStyle = COLORS[c.c]; ctx.fill();
+    ctx.globalAlpha = 1; ctx.strokeStyle = COLORS[c.c]; ctx.lineWidth = S * 0.04; ctx.stroke();
+  } else if (c.t === 'target') {
+    const got = tr.recv[i], lit = got === c.c;
+    const pulse = lit && !reducedMotion ? 1 + 0.06 * Math.sin(now / 180) : 1;
+    if (lit) {
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, S * 0.5);
+      g.addColorStop(0, COLORS[c.c]); g.addColorStop(1, 'transparent');
+      ctx.globalAlpha = 0.55; ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(0, 0, S * 0.5, 0, 6.283); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    ctx.beginPath(); ctx.arc(0, 0, S * 0.27 * pulse, 0, 6.283);
+    ctx.fillStyle = '#0b0f1e'; ctx.fill();
+    ctx.strokeStyle = COLORS[c.c]; ctx.lineWidth = S * 0.075; ctx.stroke();
+    if (got) { // ortadaki nokta, hedefe şu an ulaşan rengi gösterir
+      ctx.beginPath(); ctx.arc(0, 0, S * (lit ? 0.15 : 0.09), 0, 6.283);
+      ctx.fillStyle = COLORS[got]; ctx.fill();
+    }
+  } else { // ayna ya da ayırıcı: yatay çizgi ∓45° döndürülür, dokununca yumuşakça döner
+    const t = reducedMotion ? 1 : Math.min(1, (now - (game.turned.get(i) || 0)) / 140);
+    const to = c.o ? 1 : -1;
+    ctx.rotate(((to - (1 - t) * 2 * to) * Math.PI) / 4);
+    ctx.lineCap = 'round';
+    ctx.lineWidth = S * 0.1;
+    if (c.t === 'split') {
+      ctx.strokeStyle = '#8fb0ff';
+      ctx.setLineDash([S * 0.13, S * 0.16]);
+    } else {
+      ctx.strokeStyle = '#e6ebff';
+    }
+    ctx.beginPath(); ctx.moveTo(-S * 0.4, 0); ctx.lineTo(S * 0.4, 0); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(0, 0, S * 0.085, 0, 6.283);
+    ctx.fillStyle = '#090c17'; ctx.fill();
+    ctx.lineWidth = S * 0.035; ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (!game || !S) return;
+  const { lv } = game, { w, h, cells } = lv;
+  ctx.clearRect(0, 0, S * w, S * h);
+  for (let i = 0; i < w * h; i++) {
+    roundRect((i % w) * S + 1.5, ((i / w) | 0) * S + 1.5, S - 3, S - 3, S * 0.12);
+    ctx.fillStyle = '#10152a';
+    ctx.fill();
+  }
+  drawBeams(now);
+  cells.forEach((c, i) => { if (c) drawPiece(c, i, now); });
+
+  if (game.hint >= 0 && now < game.hintUntil) {
+    const cx = ((game.hint % w) + 0.5) * S, cy = (((game.hint / w) | 0) + 0.5) * S;
+    ctx.strokeStyle = '#ffd83b';
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = reducedMotion ? 1 : 0.55 + 0.45 * Math.sin(now / 130);
+    ctx.beginPath(); ctx.arc(cx, cy, S * 0.46, 0, 6.283); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  game.sparks = game.sparks.filter((p) => now - p.born < 700);
+  ctx.globalCompositeOperation = 'lighter';
+  for (const p of game.sparks) {
+    const t = (now - p.born) / 1000;
+    ctx.globalAlpha = 1 - t / 0.7;
+    ctx.fillStyle = COLORS[p.color];
+    ctx.beginPath();
+    ctx.arc((p.x + p.vx * t) * S, (p.y + p.vy * t) * S, S * 0.045, 0, 6.283);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+soundLabel();
+showMenu();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
