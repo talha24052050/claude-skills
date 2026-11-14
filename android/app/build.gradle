@@ -26,4 +26,5 @@ def copyGame = tasks.register('copyGame', Copy) {
     from rootProject.file('../index.html')
     into webAssets
 }
-android.sourceSets.main.assets.srcDir(copyGame)
+android.sourceSets.main.assets.srcDir(webAssets.get().asFile)
+tasks.matching { it.name == 'preBuild' }.configureEach { dependsOn copyGame }
